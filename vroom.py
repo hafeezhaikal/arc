@@ -52,7 +52,7 @@ class Follower:
             cv2.circle(image, (cxm, cy), 20, (0, 0, 255), -1)
             # CONTROL starts
             err = cxm - w / 2
-            self.twist.linear.x = 9.3
+            self.twist.linear.x = 8
             self.twist.angular.z = -float(err) / 100
             self.cmd_vel_pub.publish(self.twist)
             # CONTROL ends
