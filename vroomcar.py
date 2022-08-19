@@ -33,7 +33,7 @@ class Follower:
         # mask = cv2.inRange(hsv, lower_white, upper_white)
         mask = cv2.inRange(hsv, lower_black, upper_black)
         h, w, d = image.shape
-        search_top = 3 * h / 4
+        search_top = 3 * h / 4 - 25
         search_bot = 3 * h / 4 + 20
         mask[0:int(search_top), 0:w] = 0
         mask[int(search_bot):h, 0:w] = 0
@@ -45,14 +45,14 @@ class Follower:
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
 
-            cxm = cx + 86  # 120#143 #CW
+            cxm = cx + 84  # 120#143 #CW
             if cx <= 2 * h / 8:
                 cxm = int(cx + (h / 2))
 
             cv2.circle(image, (cxm, cy), 20, (0, 0, 255), -1)
             # CONTROL starts
             err = cxm - w / 2
-            self.twist.linear.x = 8
+            self.twist.linear.x = 9.3
             self.twist.angular.z = -float(err) / 100
             self.cmd_vel_pub.publish(self.twist)
             # CONTROL ends
