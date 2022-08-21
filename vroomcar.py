@@ -50,7 +50,7 @@ class Follower:
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
             
-            cxm = cx + 60  # 120#143 #CW
+            cxm = cx + 85  # 120#143 #CW
             if cx <= 2 * h / 8:
                 cxm = int(cx + (h / 2))
 
