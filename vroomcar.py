@@ -4,8 +4,9 @@ import cv2
 import cv_bridge
 import numpy
 
-from sensor_msgs.msg import Image, CameraInfo
+from sensor_msgs.msg import Image, CameraInfo, LaserScan
 from geometry_msgs.msg import Twist
+from time import sleep
 
 
 class Follower:
@@ -14,11 +15,15 @@ class Follower:
 
         self.image_sub = rospy.Subscriber('/catvehicle/camera_front/image_raw_front',
                                           Image, self.image_callback)
+        self.laser_sub = rospy.Subscriber('/catvehicle/front_laser_points', 
+        					LaserScan, self.callback)
         self.cmd_vel_pub = rospy.Publisher('/catvehicle/cmd_vel_safe',
                                            Twist, queue_size=1)
         self.twist = Twist()
+       
 
     def image_callback(self, msg):
+    	
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
@@ -38,23 +43,33 @@ class Follower:
         mask[0:int(search_top), 0:w] = 0
         mask[int(search_bot):h, 0:w] = 0
         M = cv2.moments(mask)
-
+	
         # Turn around if an obstacle is detected.
-
+        
         if M['m00'] > 0:
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
-
-            cxm = cx + 84  # 120#143 #CW
+            
+            cxm = cx + 60  # 120#143 #CW
             if cx <= 2 * h / 8:
                 cxm = int(cx + (h / 2))
 
             cv2.circle(image, (cxm, cy), 20, (0, 0, 255), -1)
+            	
+            """else:
+            	cxm = cx + 86  # 120#143 #CW
+            	if cx <= 2 * h / 8:
+                	cxm = int(cx + (h / 2))
+
+            	cv2.circle(image, (cxm, cy), 20, (0, 0, 255), -1)"""
+            
+	
             # CONTROL starts
             err = cxm - w / 2
-            self.twist.linear.x = 6
+            self.twist.linear.x = 5
             self.twist.angular.z = -float(err) / 100
             self.cmd_vel_pub.publish(self.twist)
+            
             # CONTROL ends
 
         resized_image = cv2.resize(image, (620, 360))
@@ -70,6 +85,27 @@ class Follower:
 
     # lr = (cx - w // 2) // sensitivity
     # lr = int(np.clip(lr, -10, 10))
+    
+    def callback(self, msg):
+    	
+    	# print ('values at 0 degress')
+    	# print (msg.ranges[0])
+    	print ('values at 90 degress')
+    	print (msg.ranges[90])
+    	# self.twist.linear.x = 4
+    	if msg.ranges[90]<9:
+    		self.twist.angular.z = 16
+    		if msg.ranges[179]<3:
+    			self.twist.angular.z = -16
+
+    	else:
+    		self.twist.angular.z = 0
+    		# self.twist.linear.x = 4
+    	# print ('values at 180 degress')
+    	# print (msg.ranges[179])
+    	print (len(msg.ranges))
+    	
+    	self.cmd_vel_pub.publish(self.twist)
 
 
 def main():
@@ -81,7 +117,7 @@ def main():
 
 
 if __name__ == '__main__':
-    rospy.init_node('line_following_node', anonymous=True)
+    rospy.init_node('scan_values', anonymous=True)
     main()
 
 # Taken from github & edited by Muhammad Hafiz Haikal (hafeez.haikal) ~instagram hehe
